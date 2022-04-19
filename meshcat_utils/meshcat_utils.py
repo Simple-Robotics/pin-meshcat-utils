@@ -32,7 +32,7 @@ CAM_PRESETS = {
     ],
     'acrobot': [
         [0., 0.1, 0.],
-        [.5, 0.1, 0.]
+        [.5, 0.2, 0.]
     ],
     'cam_ur': [
         [0.4, 0.6, -0.2],
@@ -133,10 +133,11 @@ def display_trajectory(vizer: MeshcatVisualizer,
 class ForceDraw:
     """Utility class extending base capability of pinocchio's MeshcatVisualizer."""
 
-    def __init__(self, viewer: meshcat.Visualizer, rmodel: pin.Model, rdata: pin.Data):
+    def __init__(self, vizer: pin.visualize.MeshcatVisualizer):
+        viewer = vizer.viewer
         from collections import defaultdict
-        self.rmodel = rmodel
-        self.rdata = rdata
+        self.rmodel = vizer.model
+        self.rdata = vizer.data
         self.viewer = viewer
         self._traj = defaultdict(list)  # trajectory buffer
 
