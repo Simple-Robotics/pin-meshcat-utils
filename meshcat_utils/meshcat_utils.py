@@ -65,22 +65,15 @@ CAM_PRESETS = {
 }
 
 
-def _set_cam_angle(viewer, i):
-    """Set the camera angle and target, from a set of presets: """
-    tar = CAM_PRESETS[i][0]
-    viewer.set_cam_target(tar)
-    pos = CAM_PRESETS[i][1]
-    path2 = "/Cameras/default/rotated/<object>"
-    viewer[path2].set_property("position", pos)
-
-
-_set_cam_angle.__doc__ += str(list(CAM_PRESETS.keys()))
-
-
 def display_trajectory(vizer: MeshcatVisualizer,
-                       drawer: "ForceDraw", xs, us=None,
-                       extra_pts=None, frame_ids=[], record=False,
-                       wait: float = None, show_vel: bool = False,
+                       drawer: "ForceDraw",
+                       xs,
+                       us=None,
+                       extra_pts=None,
+                       frame_ids=[],
+                       record: bool = False,
+                       wait: float = None,
+                       show_vel: bool = False,
                        progress_bar=True,
                        frame_sphere_size=0.03,
                        record_kwargs={}):
@@ -150,8 +143,14 @@ class ForceDraw:
     def set_bg(self):
         set_bg(self.viewer)
 
-    def set_cam(self, i):
-        _set_cam_angle(self.viewer, i)
+    def set_cam_angle_preset(self, i):
+        """Set the camera angle and target, from a set of presets."""
+        viewer = self.viewer
+        tar = CAM_PRESETS[i][0]
+        viewer.set_cam_target(tar)
+        pos = CAM_PRESETS[i][1]
+        path2 = "/Cameras/default/rotated/<object>"
+        viewer[path2].set_property("position", pos)
 
     def draw_objective(self, target, prefix='target', color=None, size=0.05, opacity=0.5):
         sp = g.Sphere(radius=size)
@@ -178,7 +177,12 @@ class ForceDraw:
         center = (ub + lb) * .5
         box = g.Box(lengths)
         wf_length = 1.2
-        self.viewer[prefix].set_object(box, g.MeshLambertMaterial(color=color, opacity=opacity, wireframe=False, wireframeLinewidth=wf_length))
+        self.viewer[prefix].set_object(
+                box,
+                g.MeshLambertMaterial(color=color,
+                                      opacity=opacity,
+                                      wireframe=False,
+                                      wireframeLinewidth=wf_length))
         tr = tf.translation_matrix(center)
         self.viewer[prefix].set_transform(tr)
 
@@ -249,3 +253,4 @@ class ForceDraw:
     def to_hex(col):
         from matplotlib.colors import to_hex
         return int(to_hex(col)[1:], 16)
+
