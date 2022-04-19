@@ -1,4 +1,3 @@
-import meshcat
 import numpy as np
 import pinocchio as pin
 
@@ -62,6 +61,12 @@ CAM_PRESETS = {
         [0., 1.1, 0.],
         [1.2, 1.5, -0.6]
     ]
+}
+
+VIDEO_CONFIG_DEFAULT = {
+    "codec": "libx264",
+    "macro_block_size": 8,
+    "output_params": ["-crf", "17"]
 }
 
 
@@ -179,11 +184,11 @@ class ForceDraw:
         box = g.Box(lengths)
         wf_length = 1.2
         self.viewer[prefix].set_object(
-                box,
-                g.MeshLambertMaterial(color=color,
-                                      opacity=opacity,
-                                      wireframe=False,
-                                      wireframeLinewidth=wf_length))
+            box,
+            g.MeshLambertMaterial(color=color,
+                                  opacity=opacity,
+                                  wireframe=False,
+                                  wireframeLinewidth=wf_length))
         tr = tf.translation_matrix(center)
         self.viewer[prefix].set_transform(tr)
 
@@ -254,4 +259,3 @@ class ForceDraw:
     def to_hex(col):
         from matplotlib.colors import to_hex
         return int(to_hex(col)[1:], 16)
-
