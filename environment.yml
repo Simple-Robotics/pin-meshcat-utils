@@ -1,0 +1,10 @@
+name: pin-meshcat-utils
+channels:
+  - conda-forge
+dependencies:
+  - numpy
+  - pinocchio
+  - tqdm
+  - pip:
+    - git+https://github.com/ManifoldFR/meshcat-python@feat/set-capture-resolution#egg=meshcat
+  
