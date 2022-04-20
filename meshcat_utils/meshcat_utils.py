@@ -17,15 +17,15 @@ def set_bg(viewer):
 
 
 CAM_PRESETS = {
-    0: [
+    "preset0": [
         np.zeros(3),  # target
         [3., 1., 0.]  # anchor point (x, z, -y) lhs coords
     ],
-    1: [
+    "preset1": [
         np.zeros(3),
         [1., 1., -1.]
     ],
-    2: [
+    "preset2": [
         [0., 0.6, 0.],
         [0.8, 1.2, -1.]
     ],
