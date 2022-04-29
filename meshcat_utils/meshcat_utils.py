@@ -69,6 +69,15 @@ VIDEO_CONFIG_DEFAULT = {
     "output_params": ["-crf", "17"]
 }
 
+VIDEO_CONFIGS = {
+    "default": VIDEO_CONFIG_DEFAULT,
+    "x265": {
+        "codec": "libx265",
+        "macro_block_size": 8,
+        "output_params": ["-crf", "23"]
+    }
+}
+
 
 def display_trajectory(vizer: MeshcatVisualizer,
                        drawer: "ForceDraw",
