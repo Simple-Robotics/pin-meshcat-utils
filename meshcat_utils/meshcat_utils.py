@@ -160,12 +160,14 @@ class ForceDraw:
 
     def set_cam_angle_preset(self, i):
         """Set the camera angle and target, from a set of presets."""
-        viewer = self.viewer
         tar = CAM_PRESETS[i][0]
-        viewer.set_cam_target(tar)
+        self.viewer.set_cam_target(tar)
         pos = CAM_PRESETS[i][1]
+        self.set_cam_pos(pos)
+
+    def set_cam_pos(self, pos):
         path2 = "/Cameras/default/rotated/<object>"
-        viewer[path2].set_property("position", pos)
+        self.viewer[path2].set_property("position", pos)
 
     def draw_objective(self, target, prefix='target', color=None, size=0.05, opacity=0.5):
         sp = g.Sphere(radius=size)
