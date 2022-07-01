@@ -5,7 +5,7 @@ import meshcat.transformations as tf
 import meshcat.geometry as g
 
 from pinocchio.visualize import MeshcatVisualizer
-from typing import List, Union
+from typing import List, Union, Optional, Callable
 
 
 def set_bg(viewer):
@@ -90,7 +90,9 @@ def display_trajectory(vizer: MeshcatVisualizer,
                        show_vel: bool = False,
                        progress_bar=True,
                        frame_sphere_size=0.03,
-                       record_kwargs={}):
+                       record_kwargs={},
+                       post_callback: Optional[Callable] = None):
+    """Display a state trajectory."""
     import time
     import tqdm
     import warnings
@@ -134,6 +136,9 @@ def display_trajectory(vizer: MeshcatVisualizer,
             drawer.update_trajectory(extra_pts[j, t], prefix=f'traj_extra{j}')
             drawer.draw_objective(extra_pts[j, t], prefix=f'extra_{j}', color=0x2DFB6F)
 
+        if post_callback is not None:
+            post_callback(t)
+
         if record:
             width = record_kwargs.get('w', None)
             height = record_kwargs.get('h', None)
@@ -161,12 +166,19 @@ class ForceDraw:
     def set_cam_angle_preset(self, i):
         """Set the camera angle and target, from a set of presets."""
         tar = CAM_PRESETS[i][0]
-        self.viewer.set_cam_target(tar)
         pos = CAM_PRESETS[i][1]
+        self.set_cam_target(tar)
         self.set_cam_pos(pos)
 
-    def set_cam_pos(self, pos):
+    def set_cam_target(self, tar):
+        self.viewer.set_cam_target(tar)
+
+    def set_cam_pos(self, pos, coord_left=True):
+        """Set camera position (in left-handed (x,z,-y) coordinates)"""
         path2 = "/Cameras/default/rotated/<object>"
+        if not coord_left:
+            pos[1], pos[2] = pos[2], -pos[1]
+        pos = list(pos)
         self.viewer[path2].set_property("position", pos)
 
     def draw_objective(self, target, prefix='target', color=None, size=0.05, opacity=0.5):
