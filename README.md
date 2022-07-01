@@ -9,10 +9,10 @@ Meshcat utils to use with Pinocchio.
 
 ## Install
 
-From source:
+From source, with `--no-deps` to avoid modifying your python env:
 
 ```bash
-pip install .
+pip install . --no-deps
 ```
 
 ## Features
