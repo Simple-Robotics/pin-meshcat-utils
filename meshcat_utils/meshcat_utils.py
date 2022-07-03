@@ -5,8 +5,8 @@ import meshcat.transformations as mtf
 import meshcat.geometry as mgeom
 
 from pinocchio.visualize import MeshcatVisualizer
-from typing import List, Union, Optional, Callable
-from .presets import CAMERA_PRESETS, VIDEO_CONFIG_DEFAULT
+from typing import List, Union, Callable
+from .presets import CAMERA_PRESETS
 from .video import VideoRecorder
 
 
@@ -20,13 +20,14 @@ def set_background_color(viewer):
 
 class VizUtil:
     """Utility class extending Pinocchio's MeshcatVisualizer.
-    
+
     Implements:
     * drawing objectives
     * drawing cylinders
     * drawing spheres
     * drawing lines for velocities or forces
     """
+    FORCE_SCALE = 0.06
 
     def __init__(self, vizer: pin.visualize.MeshcatVisualizer):
         from collections import defaultdict
@@ -127,7 +128,6 @@ class VizUtil:
         self.viewer[prefix].set_object(gobj)
 
     def draw_contact_forces(self, q, forces: List[np.ndarray], frame_ids: List[int]):
-        SCALE = 0.06
         pin.updateFramePlacements(self.rmodel, self.rdata)
         COLOR = 0x00FF11
         anchors = []
@@ -135,7 +135,7 @@ class VizUtil:
             p = self.rdata.oMf[fid].translation.copy()
             anchors.append(p)
             fi = forces[i]
-            seg = np.array([p, p + SCALE * fi]).T
+            seg = np.array([p, p + self.FORCE_SCALE * fi]).T
             geom = mgeom.PointsGeometry(seg)
             go = mgeom.LineSegments(geom, mgeom.LineBasicMaterial(color=COLOR))
 
@@ -157,21 +157,27 @@ class VizUtil:
                         us: List[np.ndarray] = None,
                         extra_pts=None,
                         frame_ids: List[int] = [],
-                        record=False, timestep: float = None,
-                        show_vel=False, progress_bar=True,
-                        frame_sphere_size=0.03, record_kwargs=None,
+                        record=False,
+                        timestep: float = None,
+                        show_vel=False,
+                        progress_bar=True,
+                        frame_sphere_size=0.03,
+                        record_kwargs=None,
+                        recorder: VideoRecorder = None,
                         post_callback: Callable = None):
-        play_trajectory(self.vizer, xs, us,
-                           viz_util=self,
-                           extra_pts=extra_pts,
-                           frame_ids=frame_ids,
-                           record=record,
-                           timestep=timestep,
-                           show_vel=show_vel,
-                           progress_bar=progress_bar,
-                           frame_sphere_size=frame_sphere_size,
-                           record_kwargs=record_kwargs,
-                           post_callback=post_callback)
+        play_trajectory(self.vizer,
+                        xs=xs, us=us,
+                        viz_util=self,
+                        extra_pts=extra_pts,
+                        frame_ids=frame_ids,
+                        record=record,
+                        timestep=timestep,
+                        show_vel=show_vel,
+                        progress_bar=progress_bar,
+                        frame_sphere_size=frame_sphere_size,
+                        record_kwargs=record_kwargs,
+                        recorder=recorder,
+                        post_callback=post_callback)
 
 
 def play_trajectory(vizer: MeshcatVisualizer,
@@ -186,12 +192,13 @@ def play_trajectory(vizer: MeshcatVisualizer,
                     progress_bar=True,
                     frame_sphere_size=0.03,
                     record_kwargs=None,
+                    recorder: VideoRecorder = None,
                     post_callback: Callable = None):
     """Display a state trajectory.
-    
+
+    :param vizer: the underlying meshcat visualizer
     :param xs:  states
     :param us:  controls
-    :param drawer: ForceDraw instance
     """
     import time
     import tqdm
@@ -201,15 +208,23 @@ def play_trajectory(vizer: MeshcatVisualizer,
     if viz_util is None:
         viz_util = VizUtil(vizer)
     if len(frame_ids) == 0 and show_vel:
-        warnings.warn("asked to show frame velocity, but frame_ids is empty!")
+        warnings.warn("Asked to show frame velocity, but no frame IDs were supplied.")
 
     if extra_pts is not None:
         extra_pts = np.asarray(extra_pts)
         if extra_pts.ndim == 2:
             extra_pts = extra_pts.reshape(1, *extra_pts.shape)
-        n_pts = extra_pts.shape[0]
+        num_pts = extra_pts.shape[0]
     else:
-        n_pts = 0
+        num_pts = 0
+
+    if record:
+        if recorder is None:
+            warnings.warn("Default-constructing VideoRecorder instance.")
+            fps = record_kwargs.get("fps", 1. / timestep)
+            recorder = VideoRecorder(uri=record_kwargs["uri"], fps=fps)
+    else:
+        recorder = None
 
     rmodel = viz_util.rmodel
     rdata = viz_util.rdata
@@ -217,11 +232,6 @@ def play_trajectory(vizer: MeshcatVisualizer,
     nv = rmodel.nv
     nsteps = len(xs) - 1
     trange = tqdm.trange(nsteps + 1, disable=not progress_bar)
-
-    if record:
-        recorder_ = VideoRecorder(uri=record_kwargs['uri'])
-    else:
-        recorder_ = None
 
     viz_util.clear_trajectories()
     for t in trange:
@@ -240,7 +250,7 @@ def play_trajectory(vizer: MeshcatVisualizer,
             viz_util.draw_objective(pt, prefix=f'ee_{fid}', color=0xF0FF33, size=frame_sphere_size, opacity=0.3)
 
         # plot other points
-        for j in range(n_pts):
+        for j in range(num_pts):
             viz_util.update_trajectory(extra_pts[j, t], prefix=f'traj_extra{j}')
             viz_util.draw_objective(extra_pts[j, t], prefix=f'extra_{j}', color=0x2DFB6F)
 
@@ -251,7 +261,7 @@ def play_trajectory(vizer: MeshcatVisualizer,
             width = record_kwargs.get('w', None)
             height = record_kwargs.get('h', None)
             img = np.asarray(vizer.viewer.get_image(width, height))
-            recorder_(img)
+            recorder(img)
 
         if timestep is not None:
             time.sleep(timestep)
