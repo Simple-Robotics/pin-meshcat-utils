@@ -175,7 +175,7 @@ class VizUtil:
 
 def play_trajectory(vizer: MeshcatVisualizer,
                     xs: List[np.ndarray],
-                    us: Lisŧ[np.ndarray] = None,
+                    us: List[np.ndarray] = None,
                     drawer: VizUtil = None,
                     extra_pts=None,
                     frame_ids: List[int] = [],
@@ -249,3 +249,6 @@ def play_trajectory(vizer: MeshcatVisualizer,
         if timestep is not None:
             time.sleep(timestep)
     return images
+
+
+__all__ = ["VizUtil", "play_trajectory", "set_background_color"]
