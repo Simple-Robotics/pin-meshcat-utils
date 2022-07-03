@@ -6,7 +6,8 @@ import meshcat.geometry as mgeom
 
 from pinocchio.visualize import MeshcatVisualizer
 from typing import List, Union, Optional, Callable
-from .presets import CAMERA_PRESETS
+from .presets import CAMERA_PRESETS, VIDEO_CONFIG_DEFAULT
+from .video import VideoRecorder
 
 
 def set_background_color(viewer):
@@ -161,7 +162,7 @@ class VizUtil:
                         frame_sphere_size=0.03, record_kwargs=None,
                         post_callback: Callable = None):
         play_trajectory(self.vizer, xs, us,
-                           drawer=self,
+                           viz_util=self,
                            extra_pts=extra_pts,
                            frame_ids=frame_ids,
                            record=record,
@@ -176,7 +177,7 @@ class VizUtil:
 def play_trajectory(vizer: MeshcatVisualizer,
                     xs: List[np.ndarray],
                     us: List[np.ndarray] = None,
-                    drawer: VizUtil = None,
+                    viz_util: VizUtil = None,
                     extra_pts=None,
                     frame_ids: List[int] = [],
                     record: bool = False,
@@ -197,8 +198,8 @@ def play_trajectory(vizer: MeshcatVisualizer,
     import warnings
     if record_kwargs is None:
         record_kwargs = {}
-    if drawer is None:
-        drawer = VizUtil(vizer)
+    if viz_util is None:
+        viz_util = VizUtil(vizer)
     if len(frame_ids) == 0 and show_vel:
         warnings.warn("asked to show frame velocity, but frame_ids is empty!")
 
@@ -210,14 +211,19 @@ def play_trajectory(vizer: MeshcatVisualizer,
     else:
         n_pts = 0
 
-    rmodel = drawer.rmodel
-    rdata = drawer.rdata
+    rmodel = viz_util.rmodel
+    rdata = viz_util.rdata
     nq = rmodel.nq
     nv = rmodel.nv
     nsteps = len(xs) - 1
-    images = []
     trange = tqdm.trange(nsteps + 1, disable=not progress_bar)
-    drawer.clear_trajectories()
+
+    if record:
+        recorder_ = VideoRecorder(uri=record_kwargs['uri'])
+    else:
+        recorder_ = None
+
+    viz_util.clear_trajectories()
     for t in trange:
         q = xs[t][:nq]
         v = xs[t][nq:nq + nv]
@@ -228,15 +234,15 @@ def play_trajectory(vizer: MeshcatVisualizer,
         # plot input frame ids
         for fid in frame_ids:
             if show_vel:
-                drawer.draw_frame_vel(fid)
+                viz_util.draw_frame_vel(fid)
             pt = rdata.oMf[fid].translation.copy()
-            drawer.update_trajectory(pt, prefix=f'traj_fid{fid}')
-            drawer.draw_objective(pt, prefix=f'ee_{fid}', color=0xF0FF33, size=frame_sphere_size, opacity=0.3)
+            viz_util.update_trajectory(pt, prefix=f'traj_fid{fid}')
+            viz_util.draw_objective(pt, prefix=f'ee_{fid}', color=0xF0FF33, size=frame_sphere_size, opacity=0.3)
 
         # plot other points
         for j in range(n_pts):
-            drawer.update_trajectory(extra_pts[j, t], prefix=f'traj_extra{j}')
-            drawer.draw_objective(extra_pts[j, t], prefix=f'extra_{j}', color=0x2DFB6F)
+            viz_util.update_trajectory(extra_pts[j, t], prefix=f'traj_extra{j}')
+            viz_util.draw_objective(extra_pts[j, t], prefix=f'extra_{j}', color=0x2DFB6F)
 
         if post_callback is not None:
             post_callback(t)
@@ -245,10 +251,10 @@ def play_trajectory(vizer: MeshcatVisualizer,
             width = record_kwargs.get('w', None)
             height = record_kwargs.get('h', None)
             img = np.asarray(vizer.viewer.get_image(width, height))
-            images.append(img)
+            recorder_(img)
+
         if timestep is not None:
             time.sleep(timestep)
-    return images
 
 
 __all__ = ["VizUtil", "play_trajectory", "set_background_color"]
