@@ -19,27 +19,27 @@ def set_bg(viewer):
 CAM_PRESETS = {
     "preset0": [
         np.zeros(3),  # target
-        [3., 1., 0.]  # anchor point (x, z, -y) lhs coords
+        [3., 0., 1.]  # anchor point (x, z, -y) lhs coords
     ],
     "preset1": [
         np.zeros(3),
-        [1., 1., -1.]
+        [1., 1., 1.]
     ],
     "preset2": [
-        [0., 0.6, 0.],
-        [0.8, 1.2, -1.]
+        [0., 0., 0.6],
+        [0.8, 1., 1.2]
     ],
     'acrobot': [
         [0., 0.1, 0.],
-        [.5, 0.2, 0.]
+        [.5, 0., 0.2]
     ],
     'cam_ur': [
         [0.4, 0.6, -0.2],
-        [1., 1.2, -0.4]
+        [1., 0.4, 1.2]
     ],
     'cam_ur2': [
         [0.4, 0.3, 0.],
-        [0.5, 1.4, -0.1]
+        [0.5, 0.1, 1.4]
     ],
     'cam_ur3': [
         [0.4, 0.3, 0.],
@@ -47,19 +47,19 @@ CAM_PRESETS = {
     ],
     'cam_ur4': [   # x>0 to x<0
         [-1., 0.3, 0.],
-        [1.3, 1.2, -0.1]
+        [1.3, 0.1, 1.2]
     ],
     'cam_ur5': [
         [-1., 0.3, 0.],
-        [-0.05, 1.2, -1.5]
+        [-0.05, 1.5, 1.2]
     ],
     'talos': [
         [0., 1.2, 0.],
-        [1.5, 1.5, -0.3]
+        [1.5, 0.3, 1.5]
     ],
     'talos2': [
         [0., 1.1, 0.],
-        [1.2, 1.5, -0.6]
+        [1.2, 0.6, 1.5]
     ]
 }
 
@@ -173,13 +173,9 @@ class ForceDraw:
     def set_cam_target(self, tar):
         self.viewer.set_cam_target(tar)
 
-    def set_cam_pos(self, pos, coord_left=True):
-        """Set camera position (in left-handed (x,z,-y) coordinates)"""
-        path2 = "/Cameras/default/rotated/<object>"
-        if not coord_left:
-            pos[1], pos[2] = pos[2], -pos[1]
-        pos = list(pos)
-        self.viewer[path2].set_property("position", pos)
+    def set_cam_pos(self, pos):
+        """Set camera position."""
+        self.viewer.set_cam_pos(pos)
 
     def draw_objective(self, target, prefix='target', color=None, size=0.05, opacity=0.5):
         sp = g.Sphere(radius=size)
