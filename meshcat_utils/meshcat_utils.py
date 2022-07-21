@@ -162,22 +162,79 @@ class VizUtil:
                         show_vel=False,
                         progress_bar=True,
                         frame_sphere_size=0.03,
+                        frame_sphere_color=0xF0FF33,
                         record_kwargs=None,
                         recorder: VideoRecorder = None,
                         post_callback: Callable = None):
-        play_trajectory(self.vizer,
-                        xs=xs, us=us,
-                        viz_util=self,
-                        extra_pts=extra_pts,
-                        frame_ids=frame_ids,
-                        record=record,
-                        timestep=timestep,
-                        show_vel=show_vel,
-                        progress_bar=progress_bar,
-                        frame_sphere_size=frame_sphere_size,
-                        record_kwargs=record_kwargs,
-                        recorder=recorder,
-                        post_callback=post_callback)
+        """Display a state trajectory.
+
+        :param vizer: the underlying meshcat visualizer
+        :param xs:  states
+        :param us:  controls
+        """
+        import time
+        import tqdm
+        import warnings
+        if record_kwargs is None:
+            record_kwargs = {}
+        if len(frame_ids) == 0 and show_vel:
+            warnings.warn("Asked to show frame velocity, but no frame IDs were supplied.")
+
+        if extra_pts is not None:
+            extra_pts = np.asarray(extra_pts)
+            if extra_pts.ndim == 2:
+                extra_pts = extra_pts.reshape(1, *extra_pts.shape)
+            num_pts = extra_pts.shape[0]
+        else:
+            num_pts = 0
+
+        if record:
+            if recorder is None:
+                warnings.warn("Default-constructing VideoRecorder instance.")
+                fps = record_kwargs.get("fps", 1. / timestep)
+                recorder = VideoRecorder(uri=record_kwargs["uri"], fps=fps)
+        else:
+            recorder = None
+
+        rmodel = self.rmodel
+        rdata = self.rdata
+        nq = rmodel.nq
+        nv = rmodel.nv
+        nsteps = len(xs) - 1
+        trange = tqdm.trange(nsteps + 1, disable=not progress_bar)
+
+        self.clear_trajectories()
+        for t in trange:
+            q = xs[t][:nq]
+            v = xs[t][nq:nq + nv]
+            pin.forwardKinematics(rmodel, rdata, q, v)
+            self.vizer.display()
+            pin.updateFramePlacements(rmodel, rdata)
+
+            # plot input frame ids
+            for fid in frame_ids:
+                if show_vel:
+                    self.draw_frame_vel(fid)
+                pt = rdata.oMf[fid].translation.copy()
+                self.update_trajectory(pt, prefix=f'traj_fid{fid}')
+                self.draw_objective(pt, prefix=f'ee_{fid}', color=frame_sphere_color, size=frame_sphere_size, opacity=0.1)
+
+            # plot other points
+            for j in range(num_pts):
+                self.update_trajectory(extra_pts[j, t], prefix=f'traj_extra{j}')
+                self.draw_objective(extra_pts[j, t], prefix=f'extra_{j}', color=0x2DFB6F)
+
+            if post_callback is not None:
+                post_callback(t)
+
+            if record:
+                width = record_kwargs.get('w', None)
+                height = record_kwargs.get('h', None)
+                img = np.asarray(self.viewer.get_image(width, height))
+                recorder(img)
+
+            if timestep is not None:
+                time.sleep(timestep)
 
 
 def play_trajectory(vizer: MeshcatVisualizer,
@@ -191,80 +248,20 @@ def play_trajectory(vizer: MeshcatVisualizer,
                     show_vel: bool = False,
                     progress_bar=True,
                     frame_sphere_size=0.03,
+                    frame_sphere_color=0xF0FF33,
                     record_kwargs=None,
                     recorder: VideoRecorder = None,
                     post_callback: Callable = None):
-    """Display a state trajectory.
-
-    :param vizer: the underlying meshcat visualizer
-    :param xs:  states
-    :param us:  controls
-    """
-    import time
-    import tqdm
-    import warnings
-    if record_kwargs is None:
-        record_kwargs = {}
     if viz_util is None:
         viz_util = VizUtil(vizer)
-    if len(frame_ids) == 0 and show_vel:
-        warnings.warn("Asked to show frame velocity, but no frame IDs were supplied.")
-
-    if extra_pts is not None:
-        extra_pts = np.asarray(extra_pts)
-        if extra_pts.ndim == 2:
-            extra_pts = extra_pts.reshape(1, *extra_pts.shape)
-        num_pts = extra_pts.shape[0]
-    else:
-        num_pts = 0
-
-    if record:
-        if recorder is None:
-            warnings.warn("Default-constructing VideoRecorder instance.")
-            fps = record_kwargs.get("fps", 1. / timestep)
-            recorder = VideoRecorder(uri=record_kwargs["uri"], fps=fps)
-    else:
-        recorder = None
-
-    rmodel = viz_util.rmodel
-    rdata = viz_util.rdata
-    nq = rmodel.nq
-    nv = rmodel.nv
-    nsteps = len(xs) - 1
-    trange = tqdm.trange(nsteps + 1, disable=not progress_bar)
-
-    viz_util.clear_trajectories()
-    for t in trange:
-        q = xs[t][:nq]
-        v = xs[t][nq:nq + nv]
-        pin.forwardKinematics(rmodel, rdata, q, v)
-        vizer.display()
-        pin.updateFramePlacements(rmodel, rdata)
-
-        # plot input frame ids
-        for fid in frame_ids:
-            if show_vel:
-                viz_util.draw_frame_vel(fid)
-            pt = rdata.oMf[fid].translation.copy()
-            viz_util.update_trajectory(pt, prefix=f'traj_fid{fid}')
-            viz_util.draw_objective(pt, prefix=f'ee_{fid}', color=0xF0FF33, size=frame_sphere_size, opacity=0.3)
-
-        # plot other points
-        for j in range(num_pts):
-            viz_util.update_trajectory(extra_pts[j, t], prefix=f'traj_extra{j}')
-            viz_util.draw_objective(extra_pts[j, t], prefix=f'extra_{j}', color=0x2DFB6F)
-
-        if post_callback is not None:
-            post_callback(t)
-
-        if record:
-            width = record_kwargs.get('w', None)
-            height = record_kwargs.get('h', None)
-            img = np.asarray(vizer.viewer.get_image(width, height))
-            recorder(img)
-
-        if timestep is not None:
-            time.sleep(timestep)
+    viz_util.play_trajectory(xs, us, extra_pts=extra_pts,
+                             frame_ids=frame_ids, record=record,
+                             timestep=timestep, show_vel=show_vel,
+                             progress_bar=progress_bar,
+                             frame_sphere_size=frame_sphere_size,
+                             frame_sphere_color=frame_sphere_color,
+                             record_kwargs=record_kwargs,
+                             recorder=recorder, post_callback=post_callback)
 
 
 __all__ = ["VizUtil", "play_trajectory", "set_background_color"]
