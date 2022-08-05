@@ -40,10 +40,11 @@ class VizUtil:
     def set_bg_color(self):
         set_background_color(self.viewer)
 
-    def set_cam_angle_preset(self, i):
+    def set_cam_angle_preset(self, key: str):
         """Set the camera angle and target, from a set of presets."""
-        self.set_cam_target(CAMERA_PRESETS[i][0])
-        self.set_cam_pos(CAMERA_PRESETS[i][1])
+        assert key in CAMERA_PRESETS.keys()
+        self.set_cam_target(CAMERA_PRESETS[key][0])
+        self.set_cam_pos(CAMERA_PRESETS[key][1])
 
     def set_cam_target(self, tar):
         self.viewer.set_cam_target(tar)
