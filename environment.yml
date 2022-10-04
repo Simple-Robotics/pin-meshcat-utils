@@ -6,5 +6,5 @@ dependencies:
   - pinocchio
   - tqdm
   - pip:
-    - git+https://github.com/ManifoldFR/meshcat-python@feat/set-capture-resolution#egg=meshcat
+    - git+https://github.com/ManifoldFR/meshcat-python#egg=meshcat
   
