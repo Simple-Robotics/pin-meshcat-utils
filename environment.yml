@@ -7,4 +7,3 @@ dependencies:
   - tqdm
   - pip:
     - git+https://github.com/ManifoldFR/meshcat-python#egg=meshcat
-  

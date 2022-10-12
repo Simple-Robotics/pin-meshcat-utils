@@ -1,9 +1,8 @@
 import imageio.v2 as iio
-from .presets import VIDEO_CONFIG_DEFAULT, VIDEO_CONFIGS
+from .presets import VIDEO_CONFIG_DEFAULT, VIDEO_CONFIGS  # noqa
 
 
 class VideoRecorder:
-
     def __init__(self, uri: str, fps: float, config=VIDEO_CONFIG_DEFAULT):
         self.writer = iio.get_writer(uri, fps=fps, **config)
 
