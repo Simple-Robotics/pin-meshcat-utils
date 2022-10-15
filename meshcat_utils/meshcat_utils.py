@@ -79,6 +79,8 @@ class VizUtil:
         self.viewer[prefix].set_transform(Tr @ R1)
 
     def draw_bbox(self, lb, ub):
+        lb = np.asarray(lb)
+        ub = np.asarray(ub)
         color = 0x7FCB85
         opacity = 0.18
         prefix = "bbox"
@@ -176,12 +178,12 @@ class VizUtil:
         us: List[np.ndarray] = None,
         extra_pts=None,
         frame_ids: List[int] = [],
-        record=False,
         timestep: float = None,
         show_vel=False,
         progress_bar=True,
         frame_sphere_size=0.03,
         frame_sphere_color=0xF0FF33,
+        record=False,
         record_kwargs=None,
         recorder: VideoRecorder = None,
         post_callback: Callable = None,
@@ -196,8 +198,10 @@ class VizUtil:
         import tqdm
         import warnings
 
-        if record_kwargs is None:
-            record_kwargs = {}
+        if recorder is not None:
+            record = True
+        if record and record_kwargs is None:
+            record_kwargs = {"uri": "meshcat_video.mp4", "fps": 1.0 / timestep}
         if len(frame_ids) == 0 and show_vel:
             warnings.warn(
                 "Asked to show frame velocity, but no frame IDs were supplied."
@@ -214,8 +218,9 @@ class VizUtil:
         if record:
             if recorder is None:
                 warnings.warn("Default-constructing VideoRecorder instance.")
-                fps = record_kwargs.get("fps", 1.0 / timestep)
-                recorder = VideoRecorder(uri=record_kwargs["uri"], fps=fps)
+                recorder = VideoRecorder(
+                    uri=record_kwargs["uri"], fps=record_kwargs["fps"]
+                )
         else:
             recorder = None
 
