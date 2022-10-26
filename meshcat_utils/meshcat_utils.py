@@ -201,7 +201,11 @@ class VizUtil:
         if recorder is not None:
             record = True
         if record and record_kwargs is None:
-            record_kwargs = {"uri": "meshcat_video.mp4", "fps": 1.0 / timestep}
+            if timestep:
+                fps = 1.0 / timestep
+            else:
+                fps = 30
+            record_kwargs = {"uri": "meshcat_video.mp4", "fps": fps}
         if len(frame_ids) == 0 and show_vel:
             warnings.warn(
                 "Asked to show frame velocity, but no frame IDs were supplied."
