@@ -100,6 +100,14 @@ class VizUtil:
         tr = mtf.translation_matrix(center)
         self.viewer[prefix].set_transform(tr)
 
+    def draw_plane(
+        self, width=1, height=1, color=0xCFE0FF, opacity=0.4, transform=np.eye(4)
+    ):
+        self._plane = mgeom.Plane(width, height)
+        material = mgeom.MeshLambertMaterial(color, opacity)
+        self.viewer["/plane"].set_object(self._plane, material)
+        self.viewer["/plane"].set_transform(transform)
+
     def draw_objectives(
         self, targets: Union[list, dict], prefix="", color=None, size=0.08, opacity=0.5
     ):
