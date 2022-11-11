@@ -206,8 +206,11 @@ class VizUtil:
         import tqdm
         import warnings
 
-        if recorder is not None:
+        if not record:
+            recorder = None
+        elif recorder is not None:
             record = True
+
         if record and record_kwargs is None:
             if timestep:
                 fps = 1.0 / timestep
