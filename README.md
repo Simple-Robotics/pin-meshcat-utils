@@ -4,7 +4,7 @@ Utils to use Meshcat with Pinocchio.
 
 ## Dependencies
 
-* My [branch of Meshcat](https://github.com/ManifoldFR/meshcat-python/tree/feat/set-capture-resolution)
+* Our branch of [meshcat-python](https://github.com/inria-paris-robotic-lab/meshcat-python)
 * tqdm | [GitHub](https://github.com/tqdm/tqdm)
 * imageio with the ffmpeg plugin | [GitHub](https://github.com/imageio/imageio), [RTD](https://imageio.readthedocs.io/en/latest/)
 * [Pinocchio](https://github.com/stack-of-tasks/pinocchio/)
