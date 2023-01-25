@@ -1,5 +1,7 @@
 # Meshcat utils
 
+**WARNING** Do not use this package anymore; you should upgrade your version of Pinocchio instead.
+
 Utils to use Meshcat with Pinocchio.
 
 ## Dependencies
